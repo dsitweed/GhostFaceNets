@@ -222,6 +222,16 @@ def calculate_accuracy(threshold, dist, actual_issame):
     return tpr, fpr, acc
 
 
+def calculate_val_far(threshold, dist, actual_issame):
+    predict_issame = np.less(dist, threshold)
+    true_accept = np.sum(np.logical_and(predict_issame, actual_issame))
+    false_accept = np.sum(np.logical_and(predict_issame, np.logical_not(actual_issame)))
+    true_far = np.sum(np.logical_and(np.logical_not(predict_issame), np.logical_not(actual_issame)))
+    false_far = np.sum(np.logical_and(np.logical_not(predict_issame), actual_issame))
+
+    far = false_accept / float(true_accept + false_accept)
+    return true_accept / float(len(actual_issame)), far
+
 def calculate_val(thresholds, embeddings1, embeddings2, actual_issame, far_target, nrof_folds=10):
     assert embeddings1.shape[0] == embeddings2.shape[0]
     assert embeddings1.shape[1] == embeddings2.shape[1]
@@ -242,6 +252,10 @@ def calculate_val(thresholds, embeddings1, embeddings2, actual_issame, far_targe
         far_train = np.zeros(nrof_thresholds)
         for threshold_idx, threshold in enumerate(thresholds):
             _, far_train[threshold_idx] = calculate_val_far(threshold, dist[train_set], actual_issame[train_set])
+
+        # Ensure no duplicate values in far_train by adding a small perturbation
+        far_train += np.random.randn(len(far_train)) * 1e-9
+
         if np.max(far_train) >= far_target:
             f = interpolate.interp1d(far_train, thresholds, kind="slinear")
             threshold = f(far_target)
