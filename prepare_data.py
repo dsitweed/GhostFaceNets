@@ -24,6 +24,8 @@ def MXnet_record_to_folder(dataset_dir, save_dir=None):
     imgrec = mx.recordio.MXIndexedRecordIO(idx_path, bin_path, "r")
     rec_header, _ = mx.recordio.unpack(imgrec.read_idx(0))
 
+    print("HEADER: ", rec_header)
+
     for ii in tqdm(range(1, int(rec_header.label[0]))):
         img_info = imgrec.read_idx(ii)
         header, img = mx.recordio.unpack(img_info)

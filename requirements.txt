@@ -1,0 +1,8 @@
+tensorflow
+keras
+keras_cv_attention_models
+glob2
+pandas
+tqdm
+scikit-learn
+scikit-image
