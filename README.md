@@ -421,3 +421,8 @@ and
     ```
   - **Latest DOI**: [![DOI](https://zenodo.org/badge/391777965.svg)](https://zenodo.org/badge/latestdoi/391777965)
 ***
+
+
+# Get embedding image
+
+https://github.com/HamadYA/GhostFaceNets/issues/28
