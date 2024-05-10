@@ -236,3 +236,5 @@ elif __name__ == "__test__":
     model_file = "checkpoints/GhostFaceNet_W1.3_S1_ArcFace.h5"
     batch_size = 64
     save_embeddings = None
+
+# python3 eval_folder.py -d datasets/vn_celeb_small_112x112_folders -m checkpoints/ghostnetv1_w1.3_s2.h5 -S res
