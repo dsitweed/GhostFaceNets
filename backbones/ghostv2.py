@@ -135,6 +135,60 @@ def GhostNetV2(
     reload_model_weights(model, PRETRAINED_DICT, "ghostnetv2", pretrained)
     return model
 
+def GhostNetV2_ky(
+    stem_width=16,
+    stem_strides=2,
+    width_mul=1.0,
+    num_ghost_module_v1_stacks=2,
+    input_shape=(224, 224, 3),
+    num_classes=1000,
+    activation="relu",
+    classifier_activation="softmax",
+    dropout=0,
+    pretrained=None,
+    model_name="ghostnetv2",
+    kwargs=None,
+):
+    inputs = keras.layers.Input(input_shape)
+    stem_width = make_divisible(stem_width * width_mul, divisor=4)
+    nn = conv2d_no_bias(inputs, stem_width, 3, strides=stem_strides, padding="same", name="stem_")
+    nn = batchnorm_with_activation(nn, activation=activation, name="stem_")
+
+    """ stages """
+    kernel_sizes = [3, 3, 5, 3, 5]  # Rút ngắn danh sách
+    first_ghost_channels = [16, 48, 72, 200, 480]  # Rút ngắn danh sách
+    out_channels = [16, 24, 40, 80, 160]  # Rút ngắn danh sách
+    se_ratios = [0, 0, 0.25, 0, 0.25]  # Rút ngắn danh sách
+    strides = [1, 2, 2, 1, 2]  # Rút ngắn danh sách
+
+    for stack_id, (kernel, stride, first_ghost, out_channel, se_ratio) in enumerate(zip(kernel_sizes, strides, first_ghost_channels, out_channels, se_ratios)):
+        stack_name = "stack{}_".format(stack_id + 1)
+        out_channel = make_divisible(out_channel * width_mul, 4)
+        first_ghost_channel = make_divisible(first_ghost * width_mul, 4)
+        shortcut = False if out_channel == nn.shape[-1] and stride == 1 else True
+        use_ghost_module_multiply = True if num_ghost_module_v1_stacks >= 0 and stack_id >= num_ghost_module_v1_stacks else False
+        nn = ghost_bottleneck(
+            nn, out_channel, first_ghost_channel, kernel, stride, se_ratio, shortcut, use_ghost_module_multiply, activation=activation, name=stack_name
+        )
+
+    nn = conv2d_no_bias(nn, make_divisible(first_ghost_channels[-1] * width_mul, 4), 1, strides=1, name="pre_")
+    nn = batchnorm_with_activation(nn, activation=activation, name="pre_")
+
+    if num_classes > 0:
+        nn = keras.layers.GlobalAveragePooling2D(keepdims=True)(nn)
+        nn = conv2d_no_bias(nn, 512, 1, strides=1, use_bias=True, name="features_")  # Thay đổi số lượng kênh thành 512
+        nn = activation_by_name(nn, activation, name="features_")
+        nn = keras.layers.Flatten()(nn)
+        if dropout > 0 and dropout < 1:
+            nn = keras.layers.Dropout(dropout)(nn)
+        nn = keras.layers.Dense(num_classes, dtype="float32", activation=classifier_activation, name="head")(nn)
+
+    model = keras.models.Model(inputs, nn, name=model_name)
+    add_pre_post_process(model, rescale_mode="torch")
+    reload_model_weights(model, PRETRAINED_DICT, "ghostnetv2", pretrained)
+    return model
+
+
 
 def GhostNetV2_1X(input_shape=(224, 224, 3), num_classes=1000, activation="relu", classifier_activation="softmax", pretrained="imagenet", **kwargs):
     return GhostNetV2(**locals(), model_name="ghostnetv2_1x", **kwargs)

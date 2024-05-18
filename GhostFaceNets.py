@@ -10,11 +10,26 @@ def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet"
         from backbones import ghost_model
 
         xx = ghost_model.GhostNet(input_shape=input_shape, include_top=False, width=1, **kwargs)
-    
+
     elif name_lower == "ghostnetv2":
         from backbones import ghostv2
 
         xx = ghostv2.GhostNetV2(stem_width=16,
+                                stem_strides=2,
+                                width_mul=1.3,
+                                num_ghost_module_v1_stacks=2,  # num of `ghost_module` stcks on the head, others are `ghost_module_multiply`, set `-1` for all using `ghost_module`
+                                input_shape=(112, 112, 3),
+                                num_classes=0,
+                                activation="prelu",
+                                classifier_activation=None,
+                                dropout=0,
+                                pretrained=None,
+                                model_name="ghostnetv2",
+                                **kwargs)
+    elif name_lower == "ghostnetv2_ky":
+        from backbones import ghostv2
+
+        xx = ghostv2.GhostNetV2_ky(stem_width=16,
                                 stem_strides=1,
                                 width_mul=1.3,
                                 num_ghost_module_v1_stacks=2,  # num of `ghost_module` stcks on the head, others are `ghost_module_multiply`, set `-1` for all using `ghost_module`
@@ -26,7 +41,6 @@ def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet"
                                 pretrained=None,
                                 model_name="ghostnetv2",
                                 **kwargs)
-
     else:
         return None
     xx.trainable = True
@@ -74,7 +88,7 @@ def buildin_models(
             nn = keras.layers.PReLU(shared_axes=[1, 2], name="pw_" + pointwise_conv_act)(nn)
         else:
             nn = keras.layers.Activation(pointwise_conv_act, name="pw_" + pointwise_conv_act)(nn)
-    
+
     """ GDC """
     nn = keras.layers.DepthwiseConv2D(nn.shape[1], use_bias=False, name="GDC_dw")(nn)
     # nn = keras.layers.Conv2D(nn.shape[-1], nn.shape[1], use_bias=False, padding="valid", groups=nn.shape[-1])(nn)

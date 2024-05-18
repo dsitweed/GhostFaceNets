@@ -7,6 +7,8 @@ import myCallbacks
 import tensorflow as tf
 from tensorflow import keras
 import models
+import wandb
+from wandb.integration.keras import WandbCallback
 
 # import multiprocessing as mp
 
@@ -18,6 +20,9 @@ for gpu in gpus:
     tf.config.experimental.set_memory_growth(gpu, True)
 # strategy = tf.distribute.MirroredStrategy()
 # strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")
+
+# start a new wandb run to track this script
+wandb.init(project="GhostFaceNet", entity="luffy3042001")
 
 
 class Train:
@@ -57,7 +62,7 @@ class Train:
 
         self.model, self.basic_model, self.save_path, self.inited_from_model, self.sam_rho, self.pretrained = None, None, save_path, False, sam_rho, pretrained
         self.vpl_start_iters, self.vpl_allowed_delta = vpl_start_iters, vpl_allowed_delta
-        
+
         #if model is not specified, try to reload model from checkpoints
         if model is None and basic_model is None:
             model = os.path.join("checkpoints", save_path)
@@ -80,14 +85,14 @@ class Train:
             self.basic_model = keras.models.Model(self.model.inputs[0], self.model.layers[embedding_layer].output)
             self.inited_from_model = True
             print(">>>> Specified model structure, output layer will keep from changing")
-        
+
         #If basic model is string
         elif isinstance(basic_model, str):
             if basic_model.endswith(".h5") and os.path.exists(basic_model):
                 print(">>>> Load basic_model from h5 file: %s..." % basic_model)
                 with keras.utils.custom_object_scope(custom_objects):
                     self.basic_model = keras.models.load_model(basic_model, compile=compile, custom_objects=custom_objects)
-        
+
         #If basic model passed is keras.models.Model
         elif isinstance(basic_model, keras.models.Model):
             self.basic_model = basic_model
@@ -109,7 +114,7 @@ class Train:
         #Losses
         self.softmax, self.arcface, self.arcface_partial, self.triplet = "softmax", "arcface", "arcface_partial", "triplet"
         self.center, self.distill = "center", "distill"
-        
+
 
         if output_weight_decay >= 1:
             l2_weight_decay = 0
@@ -129,12 +134,12 @@ class Train:
             print(">>>> num_replicas_in_sync: %d, batch_size: %d" % (strategy.num_replicas_in_sync, self.batch_size))
             self.data_options = tf.data.Options()
             self.data_options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
-        
+
         #Evaluate
         my_evals = [evals.eval_callback(self.basic_model, ii, batch_size=self.batch_size_per_replica, eval_freq=eval_freq) for ii in eval_paths]
         if len(my_evals) != 0:
             my_evals[-1].save_model = os.path.splitext(save_path)[0]
-        
+
         #
         self.my_history, self.model_checkpoint, self.lr_scheduler, self.gently_stop = myCallbacks.basic_callbacks(
             save_path,
@@ -161,7 +166,7 @@ class Train:
         for ii in range(1, 6):
             if model.layers[-ii].name == "embedding":
                 return -ii
-    
+
     #Initialize the dataset
     def __init_dataset__(self, type, emb_loss_names):
         init_as_triplet = self.triplet in emb_loss_names or type == self.triplet
@@ -222,7 +227,7 @@ class Train:
         else:
             self.is_distill_ds = False
             self.classes = label_spec.shape[-1]
-    
+
     #Determine the optimizer
     def __init_optimizer__(self, optimizer):
         if optimizer == None:
@@ -397,7 +402,7 @@ class Train:
             self.train_ds,
             epochs=epochs,
             verbose=1,
-            callbacks=self.callbacks,
+            callbacks=self.callbacks + [WandbCallback()],
             initial_epoch=initial_epoch,
             steps_per_epoch=self.steps_per_epoch,
             # steps_per_epoch=0,

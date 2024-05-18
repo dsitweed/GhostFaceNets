@@ -61,7 +61,7 @@ def se_module(inputs, se_ratio=0.25):
     #Reshape None x C to None 1 x 1 x C
     se = Reshape((1, 1, filters))(se)
 
-    #Squeeze by using C*se_ratio. The size will be 1 x 1 x C*se_ratio 
+    #Squeeze by using C*se_ratio. The size will be 1 x 1 x C*se_ratio
     se = Conv2D(reduction, kernel_size=1, use_bias=True, kernel_initializer=CONV_KERNEL_INITIALIZER)(se)
     # se = PReLU(shared_axes=[1, 2])(se)
     se = Activation("relu")(se)
@@ -69,7 +69,7 @@ def se_module(inputs, se_ratio=0.25):
     #Excitation using C filters. The size will be 1 x 1 x C
     se = Conv2D(filters, kernel_size=1, use_bias=True, kernel_initializer=CONV_KERNEL_INITIALIZER)(se)
     se = Activation("hard_sigmoid")(se)
-    
+
     return Multiply()([inputs, se])
 
 
@@ -138,7 +138,7 @@ def GhostNet(input_shape=(224, 224, 3), include_top=True, classes=0, width=1.3, 
     # kernel_initializer = keras.initializers.VarianceScaling(scale=2.0, mode="fan_out", distribution="truncated_normal") Initializer for the kernel weights matrix
     # Initializer capable of adapting its scale to the shape of weights tensors. Check https://www.tensorflow.org/api_docs/python/tf/keras/initializers/VarianceScaling
     nn = Conv2D(out_channel, (3, 3), strides=strides, padding="same", use_bias=False, kernel_initializer=CONV_KERNEL_INITIALIZER)(inputs)  # padding=1
-    
+
     # Batch normalization applies a transformation that maintains the mean output close to 0 and the output standard deviation close to 1.
     # axis: Integer, the axis that should be normalized (typically the features axis). For instance, after a Conv2D layer with data_format="channels_first", set axis=1 in BatchNormalization.
     nn = BatchNormalization(axis=-1)(nn)
@@ -161,12 +161,12 @@ def GhostNet(input_shape=(224, 224, 3), include_top=True, classes=0, width=1.3, 
 
     pre_out = out_channel
     for dwk, stride, exp, out, se in zip(dwkernels, strides, exps, outs, use_ses):
-        
+
         out = _make_divisible(out * width, 4) # [ 20 32 32 52 52 104 104 104 104 144 144 208 208 208 208 208 ]
         exp = _make_divisible(exp * width, 4) # [ 20 64 92 92 156 312 260 240 240 624 872 872 1248 1248 1248 664 ]
-        
+
         #basically, it creates ghost bottlenecks until the final similar "out" number appear then and only then a shortcut will be created
-        #In other words, a shortcut is created when we shift from number to another different number in "out" 
+        #In other words, a shortcut is created when we shift from number to another different number in "out"
         #shortcut = [ 1 False 2 True 3 False 4 True 5 False 6 True 7 False 8 False 9 False 10 True 11 False 12 True 13 False 14 False 15 False 16 False ]
         # if out == pre_out:
         #     shortcut = False
@@ -184,7 +184,7 @@ def GhostNet(input_shape=(224, 224, 3), include_top=True, classes=0, width=1.3, 
     nn = activation(nn)
 
     #If we want to use it for classifcation or recognition for instance
-    #we include the top layer 
+    #we include the top layer
     if include_top:
         #As in the paper
         #Global Pooling condenses all of the feature maps into a single one, pooling all of the relevant information into a single map that can be easily understood by a single dense classification layer instead of multiple layers.
@@ -208,3 +208,31 @@ def GhostNet(input_shape=(224, 224, 3), include_top=True, classes=0, width=1.3, 
         nn = Activation("softmax")(nn)
 
     return Model(inputs=inputs, outputs=nn, name=name)
+
+def GhostNetV1_ky(input_shape=(224, 224, 3), include_top=True, classes=0, width=1.3, strides=2, name="GhostNet"):
+    inputs = Input(shape=input_shape)
+
+    #out_channel equals to 20 in this case
+    out_channel = _make_divisible(16 * width, 4)
+
+    #20 filters, kernel size (3, 3), strides = 1 or 2, in this case it is 2, padding = output size same as input size
+    #use_bias=False Boolean, whether the layer uses a bias vector.
+    # Padding "SAME": output size is the same as input size. This requires the filter window to slip outside input map, hence the need to pad.
+    # Padding "VALID": Filter window stays at valid position inside input map, so output size shrinks by filter_size - 1. No padding occurs.
+    # kernel_initializer = keras.initializers.VarianceScaling(scale=2.0, mode="fan_out", distribution="truncated_normal") Initializer for the kernel weights matrix
+    # Initializer capable of adapting its scale to the shape of weights tensors. Check https://www.tensorflow.org/api_docs/python/tf/keras/initializers/VarianceScaling
+    nn = Conv2D(out_channel, (3, 3), strides=strides, padding="same", use_bias=False, kernel_initializer=CONV_KERNEL_INITIALIZER)(inputs)  # padding=1
+
+    # Batch normalization applies a transformation that maintains the mean output close to 0 and the output standard deviation close to 1.
+    # axis: Integer, the axis that should be normalized (typically the features axis). For instance, after a Conv2D layer with data_format="channels_first", set axis=1 in BatchNormalization.
+    nn = BatchNormalization(axis=-1)(nn)
+
+    # Activation function, such as tf.nn.relu, or string name of built-in activation function, such as "relu".
+    nn = activation(nn)
+
+    #The above block is as in the paper except the out_channel, in the paper they used 16
+
+    # nn = Conv2D(960, (1, 1), strides=(1, 1), padding='same', use_bias=False)(nn)
+
+    #As in the paper Table 1
+    #The last value in exps which is 512 is the embedding shape
