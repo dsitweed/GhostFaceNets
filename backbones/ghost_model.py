@@ -236,3 +236,34 @@ def GhostNetV1_ky(input_shape=(224, 224, 3), include_top=True, classes=0, width=
 
     #As in the paper Table 1
     #The last value in exps which is 512 is the embedding shape
+    dwkernels = [3, 3, 5, 3, 3, 5, 5, 3, 3, 5, 3, 5]
+    exps = [16, 48, 72, 120, 200, 184, 184, 480, 672, 960, 960, 512]
+    outs = [16, 24, 40, 80, 80, 80, 112, 112, 160, 160, 160, 160]
+    use_ses = [0, 0, 0.25, 0, 0, 0, 0.25, 0.25, 0.25, 0, 0.25, 0.25]
+    strides = [1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1]
+
+    pre_out = out_channel
+    for dwk, stride, exp, out, se in zip(dwkernels, strides, exps, outs, use_ses):
+        out = _make_divisible(out * width, 4)
+        exp = _make_divisible(exp * width, 4)
+        shortcut = False if out == pre_out and stride == 1 else True
+
+        nn = ghost_bottleneck(nn, dwk, stride, exp, out, se, shortcut)
+        pre_out = out
+
+    out = _make_divisible(exps[-1] * width, 4)
+    nn = Conv2D(out, (1, 1), strides=(1, 1), padding="valid", use_bias=False, kernel_initializer=CONV_KERNEL_INITIALIZER)(nn)
+    nn = BatchNormalization(axis=-1)(nn)
+    nn = activation(nn)
+
+    if include_top:
+        nn = GlobalAveragePooling2D()(nn)
+        nn = Reshape((1, 1, int(nn.shape[1])))(nn)
+        nn = Conv2D(1280, (1, 1), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=CONV_KERNEL_INITIALIZER)(nn)
+        nn = BatchNormalization(axis=-1)(nn)
+        nn = activation(nn)
+        nn = Conv2D(classes, (1, 1), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=CONV_KERNEL_INITIALIZER)(nn)
+        nn = K.squeeze(nn, 1)
+        nn = Activation("softmax")(nn)
+
+    return Model(inputs=inputs, outputs=nn, name=name)

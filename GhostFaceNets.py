@@ -10,6 +10,9 @@ def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet"
         from backbones import ghost_model
 
         xx = ghost_model.GhostNet(input_shape=input_shape, include_top=False, width=1, **kwargs)
+    if name_lower == "ghostnetv1_ky":
+        from backbones import ghost_model
+        xx = ghost_model.GhostNetV1_ky(input_shape=input_shape, include_top=False, width=0.5, **kwargs)
 
     elif name_lower == "ghostnetv2":
         from backbones import ghostv2
@@ -32,12 +35,12 @@ def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet"
         xx = ghostv2.GhostNetV2_ky(stem_width=16,
                                 stem_strides=1,
                                 width_mul=1.3,
-                                num_ghost_module_v1_stacks=2,  # num of `ghost_module` stcks on the head, others are `ghost_module_multiply`, set `-1` for all using `ghost_module`
+                                num_ghost_module_v1_stacks=1,  # num of `ghost_module` stcks on the head, others are `ghost_module_multiply`, set `-1` for all using `ghost_module`
                                 input_shape=(112, 112, 3),
                                 num_classes=0,
                                 activation="prelu",
                                 classifier_activation=None,
-                                dropout=0,
+                                dropout=0.2,
                                 pretrained=None,
                                 model_name="ghostnetv2",
                                 **kwargs)

@@ -155,11 +155,11 @@ def GhostNetV2_ky(
     nn = batchnorm_with_activation(nn, activation=activation, name="stem_")
 
     """ stages """
-    kernel_sizes = [3, 3, 5, 3, 5]  # Rút ngắn danh sách
-    first_ghost_channels = [16, 48, 72, 200, 480]  # Rút ngắn danh sách
-    out_channels = [16, 24, 40, 80, 160]  # Rút ngắn danh sách
-    se_ratios = [0, 0, 0.25, 0, 0.25]  # Rút ngắn danh sách
-    strides = [1, 2, 2, 1, 2]  # Rút ngắn danh sách
+    kernel_sizes = [3, 3, 3, 5, 5, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 5]
+    first_ghost_channels = [16, 48, 72, 72, 120, 240, 200, 184, 184, 480, 672, 672, 960, 960, 960, 960]
+    out_channels = [16, 24, 24, 40, 40, 80, 80, 80, 80, 112, 112, 160, 160, 160, 160, 160]
+    se_ratios = [0, 0, 0, 0.25, 0.25, 0, 0, 0, 0, 0.25, 0.25, 0.25, 0, 0.25, 0, 0.25]
+    strides = [1, 2, 1, 2, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1]
 
     for stack_id, (kernel, stride, first_ghost, out_channel, se_ratio) in enumerate(zip(kernel_sizes, strides, first_ghost_channels, out_channels, se_ratios)):
         stack_name = "stack{}_".format(stack_id + 1)
