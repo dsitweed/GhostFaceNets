@@ -191,7 +191,7 @@ class Train:
             self.is_triplet_dataset = False
         elif init_as_triplet:
             print(">>>> Init triplet dataset...")
-            if self.data_path.endswith(".tfrecord"):
+            if isinstance(self.data_path, str) and self.data_path.endswith(".tfrecord"):
                 print(">>>> Combining tfrecord dataset with triplet is NOT recommended.")
                 self.train_ds, self.steps_per_epoch = data.prepare_distill_dataset_tfrecord(**dataset_params)
             else:
@@ -200,7 +200,7 @@ class Train:
             self.is_triplet_dataset = True
         else:
             print(">>>> Init softmax dataset...")
-            if self.data_path.endswith(".tfrecord"):
+            if isinstance(self.data_path, str) and self.data_path.endswith(".tfrecord"):
                 self.train_ds, self.steps_per_epoch = data.prepare_distill_dataset_tfrecord(**dataset_params)
             else:
                 self.train_ds, self.steps_per_epoch = data.prepare_dataset(**dataset_params, partial_fc_split=self.partial_fc_split)
