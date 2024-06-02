@@ -12,7 +12,7 @@ def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet"
         from backbones import ghost_model
 
         xx = ghost_model.GhostNet(input_shape=input_shape, include_top=False, width=width, **kwargs)
-    if name_lower == "ghostnetv1_ky":
+    elif name_lower == "ghostnetv1_ky":
         from backbones import ghost_model
         xx = ghost_model.GhostNetV1_ky(input_shape=input_shape, include_top=False, width=width, **kwargs)
 
