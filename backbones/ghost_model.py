@@ -236,11 +236,11 @@ def GhostNetV1_ky(input_shape=(224, 224, 3), include_top=True, classes=0, width=
 
     #As in the paper Table 1
     #The last value in exps which is 512 is the embedding shape
-    dwkernels = [3, 3, 5, 3, 3, 5, 5, 3, 3, 5, 3, 5]
-    exps = [16, 48, 72, 120, 200, 184, 184, 480, 672, 960, 960, 512]
-    outs = [16, 24, 40, 80, 80, 80, 112, 112, 160, 160, 160, 160]
-    use_ses = [0, 0, 0.25, 0, 0, 0, 0.25, 0.25, 0.25, 0, 0.25, 0.25]
-    strides = [1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 2, 1]
+    dwkernels = [3, 3, 5, 3, 3, 5, 5, 3, 3, 5, 3, 5, 3, 5, 5]
+    exps = [16, 48, 72, 72, 120, 200, 200, 184, 184, 480, 480, 672, 672, 960, 512]
+    outs = [16, 24, 40, 40, 80, 80, 80, 112, 112, 160, 160, 160, 160, 160, 160]
+    use_ses = [0, 0, 0.25, 0.25, 0, 0, 0, 0.25, 0.25, 0.25, 0, 0.25, 0, 0.25, 0.25]
+    strides = [1, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1]
 
     pre_out = out_channel
     for dwk, stride, exp, out, se in zip(dwkernels, strides, exps, outs, use_ses):

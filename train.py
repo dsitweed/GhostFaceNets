@@ -22,7 +22,7 @@ for gpu in gpus:
 # strategy = tf.distribute.OneDeviceStrategy(device="/gpu:0")
 
 # start a new wandb run to track this script
-wandb.init(project="GhostFaceNet", entity="luffy3042001")
+wandb.init(project="GhostFaceNet_training", entity="luffy3042001")
 
 
 class Train:

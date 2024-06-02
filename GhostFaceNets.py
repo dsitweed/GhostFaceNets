@@ -3,16 +3,18 @@ from tensorflow import keras
 import tensorflow.keras.backend as K
 
 
-def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet", **kwargs):
+def __init_model_from_name__(name, input_shape=(112, 112, 3), weights="imagenet", width=0.5,**kwargs):
+    print(f'Width input: {width}')
+
     name_lower = name.lower()
     """ Basic model """
     if name_lower == "ghostnetv1":
         from backbones import ghost_model
 
-        xx = ghost_model.GhostNet(input_shape=input_shape, include_top=False, width=1, **kwargs)
+        xx = ghost_model.GhostNet(input_shape=input_shape, include_top=False, width=width, **kwargs)
     if name_lower == "ghostnetv1_ky":
         from backbones import ghost_model
-        xx = ghost_model.GhostNetV1_ky(input_shape=input_shape, include_top=False, width=0.5, **kwargs)
+        xx = ghost_model.GhostNetV1_ky(input_shape=input_shape, include_top=False, width=width, **kwargs)
 
     elif name_lower == "ghostnetv2":
         from backbones import ghostv2
@@ -63,10 +65,11 @@ def buildin_models(
     use_bias=False,
     scale=True,
     weights="imagenet",
+    width=0.5,
     **kwargs
 ):
     if isinstance(stem_model, str):
-        xx = __init_model_from_name__(stem_model, input_shape, weights, **kwargs)
+        xx = __init_model_from_name__(stem_model, input_shape, weights, width,**kwargs)
         name = stem_model
     else:
         name = stem_model.name
