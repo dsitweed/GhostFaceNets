@@ -7,6 +7,7 @@ import os
 def MXnet_record_to_folder(dataset_dir, save_dir=None):
     import os
     import numpy as np
+    np.bool = np.bool_
     from tqdm import tqdm
 
     if save_dir == None:
